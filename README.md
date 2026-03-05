@@ -138,3 +138,25 @@ Arquivos gerados ficam em `exports/` (dashboard, planilhas e relatorios).
 
 - As consultas comerciais usam filtros de pecas (exclui bombas `MATERIAL LIKE '8%'`).
 - O projeto esta preparado para uso em rotina operacional com agendamento no Windows.
+
+## Troubleshooting
+
+1. Erro de conexao SQL Server (`Login timeout`, `Named Pipes`, `08001`)
+- Verifique `DB_SERVER`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` no `.env`.
+- Teste se o servidor responde na rede e se o usuario tem permissao de leitura.
+
+2. Erro de driver ODBC (`Data source name not found`)
+- Confirme o driver instalado no Windows e ajuste `DB_DRIVER` no `.env` (ex: `SQL Server`).
+
+3. Relatorio vazio
+- Confira periodo informado (`--inicio` e `--fim`).
+- Valide se existem dados no ERP para o recorte de UF/filtros aplicados.
+
+4. Valor ou cotacao diferente da tela
+- No relatorio de cobranca:
+	- `Cotacao` usa `NUMINTERNO` do pedido como prioridade.
+	- `Vencimento` usa a ultima parcela da NF (`MAX(DTVENCIMENTO)`).
+
+5. Permissao negada em outros bancos (erro SQL 916)
+- O usuario pode listar nomes das bases, mas sem acesso ao conteudo.
+- Solicite ao DBA permissao no banco alvo ou execute com usuario que tenha acesso.
