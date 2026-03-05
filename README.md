@@ -84,6 +84,52 @@ Exemplo com periodo fechado:
 python relatorio_vendedor_cobranca.py --inicio 2025-01-01 --fim 2025-12-31
 ```
 
+## Exemplos prontos
+
+Comandos mais usados na rotina:
+
+1. Atualizar dashboard sem abrir browser:
+
+```bash
+python fase4_dashboard.py --no-open
+```
+
+2. Validar consistencia apos atualizar dashboard:
+
+```bash
+python validar_dashboard.py
+```
+
+3. Gerar cobranca do ano atual ate hoje:
+
+```bash
+python relatorio_vendedor_cobranca.py
+```
+
+4. Gerar cobranca da ultima semana:
+
+```bash
+python relatorio_vendedor_cobranca.py --inicio 2026-03-01 --fim 2026-03-07
+```
+
+5. Gerar cobranca por UF (exemplo MG):
+
+```bash
+python relatorio_vendedor_cobranca.py --uf MG --inicio 2026-01-01 --fim 2026-12-31
+```
+
+6. Gerar apenas vencidos no periodo:
+
+```bash
+python relatorio_vendedor_cobranca.py --inicio 2026-01-01 --fim 2026-12-31 --somente-vencidos
+```
+
+7. Relatorio RH com alertas:
+
+```bash
+python relatorio_rh_salarios.py --meses 12 --meses-sem-reajuste 12 --limite-delta-pct 30
+```
+
 ## Saidas
 
 Arquivos gerados ficam em `exports/` (dashboard, planilhas e relatorios).
