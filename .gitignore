@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual envs
+.venv/
+venv/
+
+# Local secrets
+.env
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Generated outputs
+logs/
+exports/*.xlsx
+exports/*.log
+exports/*.csv
+exports/*.tmp
+
+# Temporary scripts
+_tmp_*.py

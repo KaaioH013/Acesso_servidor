@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard Comercial — Helibombas</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", Arial, sans-serif; background: #F2F2F2; color: #222; }
+
+  /* ── Header ── */
+  .header {
+    background: #1F4E79; color: white;
+    padding: 16px 32px; display: flex; align-items: center;
+    justify-content: space-between;
+  }
+  .header h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: 1px; }
+  .header .sub { font-size: 0.85rem; opacity: 0.8; margin-top: 2px; }
+  .header .atualizado { font-size: 0.8rem; opacity: 0.7; text-align: right; }
+    .modo-badge {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        border: 1px solid rgba(255,255,255,0.55);
+    }
+    .modo-base { background: rgba(112,173,71,0.28); color: #E9FFE0; }
+    .modo-sem { background: rgba(237,125,49,0.32); color: #FFF3E8; }
+
+    /* ── Navegação rápida ── */
+    .quick-nav {
+        background: #FFFFFF;
+        border-bottom: 1px solid #D9D9D9;
+        padding: 10px 28px;
+        display: flex;
+        gap: 10px;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+    }
+    .quick-link {
+        text-decoration: none;
+        color: #1F4E79;
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding: 6px 10px;
+        border: 1px solid #BFD3E6;
+        border-radius: 999px;
+        background: #F7FBFF;
+    }
+    .quick-link:hover { filter: brightness(0.96); }
+
+    /* ── Abas de visão ── */
+    .tabs-row {
+        background: #FFFFFF;
+        padding: 8px 28px 0;
+        display: flex;
+        gap: 8px;
+        border-bottom: 1px solid #E5E5E5;
+    }
+    .tab-btn {
+        border: 1px solid #D0D7DE;
+        border-bottom: none;
+        background: #F7F9FB;
+        color: #1F4E79;
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding: 8px 12px;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        cursor: pointer;
+    }
+    .tab-btn.active {
+        background: #FFFFFF;
+        color: #1D3B5A;
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+  /* ── KPI Cards ── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px; padding: 20px 28px;
+  }
+  .kpi-card {
+    background: white; border-radius: 8px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    border-left: 5px solid #2E75B6;
+  }
+  .kpi-card.vermelho { border-left-color: #C00000; }
+  .kpi-card.amarelo  { border-left-color: #FFC000; }
+  .kpi-card.verde    { border-left-color: #70AD47; }
+  .kpi-card.laranja  { border-left-color: #ED7D31; }
+  .kpi-label { font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-valor { font-size: 1.45rem; font-weight: 700; margin-top: 4px; color: #1F4E79; }
+  .kpi-sub   { font-size: 0.75rem; color: #aaa; margin-top: 2px; }
+
+    /* ── Modo Reunião ── */
+    .meeting-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 14px; padding: 2px 28px 16px;
+    }
+    .meeting-card {
+        background: white; border-radius: 8px;
+        padding: 14px 16px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        border-left: 5px solid #1F4E79;
+    }
+    .meeting-card.green { border-left-color: #70AD47; }
+    .meeting-card.red { border-left-color: #C00000; }
+    .meeting-title { font-size: 0.72rem; color: #777; text-transform: uppercase; letter-spacing: 0.5px; }
+    .meeting-value { font-size: 1.10rem; font-weight: 700; color: #1F4E79; margin-top: 4px; }
+    .meeting-sub { font-size: 0.78rem; color: #666; margin-top: 4px; }
+
+  /* ── Grid de gráficos ── */
+  .grid-2 {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 14px; padding: 0 28px 14px;
+  }
+  .grid-wide { padding: 0 28px 14px; }
+  .card {
+    background: white; border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    padding: 6px;
+  }
+
+  /* ── Tabelas ── */
+  .tabela { width: 100%; border-collapse: collapse; font-size: 0.80rem; }
+  .tabela th {
+    background: #1F4E79; color: white;
+    padding: 7px 10px; text-align: left; font-weight: 600;
+  }
+  .tabela td { padding: 6px 10px; border-bottom: 1px solid #ddd; }
+  .tabela tr:hover { filter: brightness(0.96); }
+
+  .section-title {
+    font-size: 0.9rem; font-weight: 700; color: #1F4E79;
+    padding: 6px 10px 4px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center; font-size: 0.72rem; color: #bbb;
+    padding: 18px; border-top: 1px solid #ddd; margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="h1" style="font-size:1.5rem;font-weight:700">🔩 HELIBOMBAS</div>
+    <div class="sub">Dashboard Comercial — Peças e Componentes</div>
+        <div class="sub">Filtro ativo: <b>Sem contrato (PETROBRAS/PETROLEO)</b></div>
+        <div class="sub">Período de referência: <b>02/2026</b> (mês fechado)</div>
+        <div class="modo-badge modo-sem">SEM CONTRATO</div>
+  </div>
+  <div class="atualizado">
+    Atualizado em<br><b>05/03/2026</b>
+  </div>
+</div>
+
+<div class="quick-nav">
+    <a class="quick-link" href="#sec-operacao">⚡ Operação</a>
+    <a class="quick-link" href="#sec-cotacoes">🧾 Cotações</a>
+    <a class="quick-link" href="#sec-estrategico">📈 Estratégico</a>
+</div>
+
+<div class="tabs-row">
+    <button class="tab-btn active" data-tab="aba-fechado" onclick="abrirAba('aba-fechado')">📅 Mês Fechado</button>
+    <button class="tab-btn" data-tab="aba-mtd" onclick="abrirAba('aba-mtd')">⚡ MTD Hoje</button>
+</div>
+
+<div id="aba-fechado" class="tab-pane active">
+
+<!-- Modo Reunião: Highlights automáticos -->
+<div class="meeting-row">
+    <div class="meeting-card green">
+        <div class="meeting-title">🎯 Crescimento Real YoY</div>
+        <div class="meeting-value">+23.1% · R$ 376.803</div>
+        <div class="meeting-sub">Fevereiro/2026 vs Fevereiro/2025 (Sem contrato (PETROBRAS/PETROLEO))</div>
+    </div>
+    <div class="meeting-card green">
+        <div class="meeting-title">🚀 Destaque Positivo</div>
+        <div class="meeting-value">Maior alta: HELIFER · R$ 451.204 (+225.4%)</div>
+        <div class="meeting-sub">Baseado na variação do mesmo mês do ano anterior</div>
+    </div>
+    <div class="meeting-card red">
+        <div class="meeting-title">⚠️ Ponto de Atenção</div>
+        <div class="meeting-value">Maior queda: HELIBOMBAS · R$ -275.882 (-30.3%)</div>
+        <div class="meeting-sub">Indica prioridade de ação comercial no curto prazo</div>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-row">
+  <div class="kpi-card">
+    <div class="kpi-label">Vendas Fevereiro/2026</div>
+    <div class="kpi-valor">R$ 2.010.116</div>
+    <div class="kpi-sub">260 pedidos · 673 itens</div>
+  </div>
+    <div class="kpi-card verde">
+        <div class="kpi-label">📈 Crescimento YoY (Fevereiro)</div>
+        <div class="kpi-valor">+23.1%</div>
+        <div class="kpi-sub">R$ 2.010.116 vs R$ 1.633.314 (mesmo filtro ativo)</div>
+    </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Carteira em Aberto</div>
+    <div class="kpi-valor">R$ 1.362.499</div>
+    <div class="kpi-sub">242 itens em aberto</div>
+  </div>
+  <div class="kpi-card vermelho">
+    <div class="kpi-label">🔴 Atrasados</div>
+    <div class="kpi-valor">67</div>
+    <div class="kpi-sub">itens com prazo vencido</div>
+  </div>
+  <div class="kpi-card amarelo">
+    <div class="kpi-label">🟡 Urgentes (≤ 7 dias)</div>
+    <div class="kpi-valor">58</div>
+    <div class="kpi-sub">itens a vencer essa semana</div>
+  </div>
+  <div class="kpi-card laranja">
+    <div class="kpi-label">📄 Aguardando NF</div>
+    <div class="kpi-valor">47</div>
+    <div class="kpi-sub">R$ 84.793 parado</div>
+  </div>
+    <div class="kpi-card">
+        <div class="kpi-label">🧾 Cotações Fevereiro/2026</div>
+        <div class="kpi-valor">315</div>
+        <div class="kpi-sub">Enc.:195 · Perd.:19 · Aberto:101 · R$ 2.776.346</div>
+        <div class="kpi-sub">Conv. geral (enc./criadas) qtd/valor: 61.9% · 48.0%</div>
+        <div class="kpi-sub">Conv. finalizadas (enc./finaliz.) qtd/valor: 91.1% · 92.6%</div>
+    </div>
+  <div class="kpi-card verde">
+    <div class="kpi-label">📊 Margem Média (Fevereiro)</div>
+    <div class="kpi-valor">51.8%</div>
+    <div class="kpi-sub">sobre itens com custo cadastrado</div>
+  </div>
+</div>
+
+<!-- Modo Operação: foco em ação diária -->
+<div class="grid-wide" id="sec-operacao">
+    <div class="card">
+        <div class="section-title">⚡ Modo Operação — Foco do Dia</div>
+        <p style='font-size:0.78rem;color:#666;padding:6px 10px'>
+          Priorize na ordem: <b>NF crítica</b> → <b>prazo atrasado</b> → <b>cotações em aberto</b>.
+        </p>
+    </div>
+</div>
+
+<!-- SLA diário operacional -->
+<div class="grid-wide">
+    <div class="card">
+        <div class="section-title">⏱️ SLA Diário da Fila de Faturamento (Status L)</div>
+        
+            <table class="tabela">
+                <thead><tr>
+                    <th>Data</th><th>Entradas (L)</th><th>Resolvidas (NF emitida)</th><th>Saldo do Dia</th><th>Backlog Atual</th><th>Taxa de Saída</th>
+                </tr></thead>
+                <tbody>
+                    <tr style="background:#C6EFCE">
+                        <td style="text-align:center"><b>05/03/2026</b></td>
+                        <td style="text-align:center"><b>0</b><br><span style='font-size:0.72em;color:#666'>R$ 0</span></td>
+                        <td style="text-align:center"><b>0</b><br><span style='font-size:0.72em;color:#666'>R$ 0</span></td>
+                        <td style="text-align:center"><b>+0</b></td>
+                        <td style="text-align:center"><b>47</b><br><span style='font-size:0.72em;color:#666'>R$ 84.793</span></td>
+                        <td style="text-align:center"><b>0.0%</b></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style='font-size:0.72rem;color:#666;padding:6px 10px'>
+                Entradas = itens em <b>status L</b> liberados para faturamento no dia (DTALTERAFAT).
+                Resolvidas = itens com NF emitida no dia. Mostra o ritmo diário da fila de faturamento.
+            </p>
+        
+    </div>
+</div>
+
+<!-- Tabela: Prioridades operacionais -->
+<div class="grid-wide">
+    <div class="card">
+        <div class="section-title">🎯 Prioridades do Dia — Ação Comercial</div>
+        <table class="tabela">
+            <thead><tr>
+                <th>Prioridade</th><th>Vendedor</th><th>Cliente</th><th>Pedido</th>
+                <th>Material</th><th>Valor</th><th>Dias Prazo</th><th>Dias NF</th><th>Ação sugerida</th>
+            </tr></thead><tbody><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>CAIO HENRIQUE RODRIGUES</td>
+                <td>CITROSUCO S/A AGROINDUSTRIA</td>
+                <td style="text-align:center">37576</td>
+                <td>3969000001</td>
+                <td style="text-align:right">R$ 75.731</td>
+                <td style="text-align:center">-4d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>CAIO HENRIQUE RODRIGUES</td>
+                <td>AGROPALMA S/A</td>
+                <td style="text-align:center">37891</td>
+                <td>3959000010</td>
+                <td style="text-align:right">R$ 66.013</td>
+                <td style="text-align:center">-14d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>DANILO CIVOLANI</td>
+                <td>CITROSUCO S/A AGROINDUSTRIA</td>
+                <td style="text-align:center">37578</td>
+                <td>3962000041</td>
+                <td style="text-align:right">R$ 64.238</td>
+                <td style="text-align:center">-27d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>CAIO HENRIQUE RODRIGUES</td>
+                <td>AGROPALMA S/A</td>
+                <td style="text-align:center">37891</td>
+                <td>3959000001</td>
+                <td style="text-align:right">R$ 43.158</td>
+                <td style="text-align:center">-14d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>CAIO HENRIQUE RODRIGUES</td>
+                <td>AGROPALMA S/A</td>
+                <td style="text-align:center">37891</td>
+                <td>3959000023</td>
+                <td style="text-align:right">R$ 36.820</td>
+                <td style="text-align:center">-14d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>HELIBOMBAS</td>
+                <td>CMPC IGUACU EMBALAGENS LTDA</td>
+                <td style="text-align:center">37947</td>
+                <td>3313000013</td>
+                <td style="text-align:right">R$ 35.900</td>
+                <td style="text-align:center">-6d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>CAIO HENRIQUE RODRIGUES</td>
+                <td>AGROPALMA S/A</td>
+                <td style="text-align:center">37891</td>
+                <td>3959000050</td>
+                <td style="text-align:right">R$ 28.316</td>
+                <td style="text-align:center">-14d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>CAIO HENRIQUE RODRIGUES</td>
+                <td>AGROPALMA S/A</td>
+                <td style="text-align:center">37891</td>
+                <td>3861000017</td>
+                <td style="text-align:right">R$ 20.702</td>
+                <td style="text-align:center">-14d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>HELIBOMBAS</td>
+                <td>SUCOCITRICO CUTRALE LTDA</td>
+                <td style="text-align:center">37730</td>
+                <td>3188024002</td>
+                <td style="text-align:right">R$ 18.777</td>
+                <td style="text-align:center">-17d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>CAIO HENRIQUE RODRIGUES</td>
+                <td>AGROPALMA S/A</td>
+                <td style="text-align:center">37891</td>
+                <td>3959000004</td>
+                <td style="text-align:right">R$ 18.378</td>
+                <td style="text-align:center">-14d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>CAIO HENRIQUE RODRIGUES</td>
+                <td>CITROSUCO S/A AGROINDUSTRIA</td>
+                <td style="text-align:center">37658</td>
+                <td>3188001009</td>
+                <td style="text-align:right">R$ 17.206</td>
+                <td style="text-align:center">-27d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>PRISCILA AP STROZI SANTO</td>
+                <td>CRI GEO BIOGAS S.A.</td>
+                <td style="text-align:center">37824</td>
+                <td>3804018002</td>
+                <td style="text-align:right">R$ 12.114</td>
+                <td style="text-align:center">-3d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>PRISCILA AP STROZI SANTO</td>
+                <td>UNIPREST INDUSTRIA E COMERCIO </td>
+                <td style="text-align:center">38079</td>
+                <td>3190001201</td>
+                <td style="text-align:right">R$ 12.107</td>
+                <td style="text-align:center">-5d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>PRISCILA AP STROZI SANTO</td>
+                <td>FRIGORIFICO VALE DO SAPUCAI LT</td>
+                <td style="text-align:center">37160</td>
+                <td>3847041002</td>
+                <td style="text-align:right">R$ 10.489</td>
+                <td style="text-align:center">-5d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>PRISCILA AP STROZI SANTO</td>
+                <td>LOUIS DREYFUS COMPANY SUCOS S.</td>
+                <td style="text-align:center">37423</td>
+                <td>3857000031</td>
+                <td style="text-align:right">R$ 10.048</td>
+                <td style="text-align:center">-16d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>PRISCILA AP STROZI SANTO</td>
+                <td>RRP ENERGIA LTDA</td>
+                <td style="text-align:center">37390</td>
+                <td>3804093129</td>
+                <td style="text-align:right">R$ 9.437</td>
+                <td style="text-align:center">-13d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>CAIO HENRIQUE RODRIGUES</td>
+                <td>AGROPALMA S/A</td>
+                <td style="text-align:center">37891</td>
+                <td>3861000016</td>
+                <td style="text-align:right">R$ 9.292</td>
+                <td style="text-align:center">-14d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>PRISCILA AP STROZI SANTO</td>
+                <td>RRP ENERGIA LTDA</td>
+                <td style="text-align:center">37390</td>
+                <td>3804009003</td>
+                <td style="text-align:right">R$ 8.929</td>
+                <td style="text-align:center">-13d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>CAIO HENRIQUE RODRIGUES</td>
+                <td>CITROSUCO S/A AGROINDUSTRIA</td>
+                <td style="text-align:center">37658</td>
+                <td>3188001009</td>
+                <td style="text-align:right">R$ 8.603</td>
+                <td style="text-align:center">-27d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr><tr style="background:#FFE699">
+                <td><b>PRAZO ATRASADO</b></td>
+                <td>CAIO HENRIQUE RODRIGUES</td>
+                <td>EBENEZER COMERCIAL E TECNOLOGI</td>
+                <td style="text-align:center">38087</td>
+                <td>3177002010</td>
+                <td style="text-align:right">R$ 6.298</td>
+                <td style="text-align:center">-6d</td>
+                <td style="text-align:center">-</td>
+                <td>Replanejar entrega e alinhar cliente</td>
+            </tr></tbody></table>
+            <p style='font-size:0.72rem;color:#666;padding:6px 10px'>
+              Ordenação por criticidade e maior impacto financeiro para gestão diária.
+            </p>
+    </div>
+</div>
+
+<!-- Tabela: Cotações -->
+<div class="grid-wide" id="sec-cotacoes">
+    <div class="card">
+        <div class="section-title">🧾 Cotações Geradas — Controle Comercial</div>
+        <table class="tabela">
+            <thead><tr>
+                <th>Cotação</th><th>Vendedor</th><th>Cliente</th><th>UF</th><th>Data</th><th>Valor Orçado</th><th>Status</th>
+            </tr></thead><tbody><tr style="background:#FFEB9C">
+                <td>126.00393</td>
+                <td>MARCELO BENTO</td>
+                <td>ANDRITZ SEPARATION INDUSTRIA E</td>
+                <td>SC</td>
+                <td style="text-align:center">02/02/2026</td>
+                <td style="text-align:right">R$ 4.489</td>
+                <td style="text-align:center"><b>EM ABERTO</b></td>
+            </tr><tr style="background:#FFEB9C">
+                <td>126.00392</td>
+                <td>HELIFER</td>
+                <td>SOCOCO S/A - AGROINDUSTRIAS DA</td>
+                <td>PA</td>
+                <td style="text-align:center">02/02/2026</td>
+                <td style="text-align:right">R$ 3.518</td>
+                <td style="text-align:center"><b>EM ABERTO</b></td>
+            </tr><tr style="background:#FFEB9C">
+                <td>126.00384</td>
+                <td>HELIBOMBAS</td>
+                <td>NORTE POLPAS AGROINDUSTRIA E C</td>
+                <td>AP</td>
+                <td style="text-align:center">02/02/2026</td>
+                <td style="text-align:right">R$ 2.932</td>
+                <td style="text-align:center"><b>EM ABERTO</b></td>
+            </tr><tr style="background:#FFEB9C">
+                <td>126.00383</td>
+                <td>HELIBOMBAS</td>
+                <td>MANAOS INDUSTRIA E COMERCIO DE</td>
+                <td>AM</td>
+                <td style="text-align:center">02/02/2026</td>
+                <td style="text-align:right">R$ 940</td>
+                <td style="text-align:center"><b>EM ABERTO</b></td>
+            </tr><tr style="background:#FFEB9C">
+                <td>126.00390</td>
+                <td>HELIBOMBAS</td>
+                <td>HELIFER INDUSTRIA E COMERCIO D</td>
+                <td>SP</td>
+                <td style="text-align:center">02/02/2026</td>
+                <td style="text-align:right">R$ 413</td>
+                <td style="text-align:center"><b>EM ABERTO</b></td>
+            </tr><tr style="background:#FFEB9C">
+                <td>126.00415</td>
+                <td>HELIFER</td>
+                <td>BRASIL BIO FUELS REFLORESTAMEN</td>
+                <td>PA</td>
+                <td style="text-align:center">03/02/2026</td>
+                <td style="text-align:right">R$ 46.318</td>
+                <td style="text-align:center"><b>EM ABERTO</b></td>
+            </tr><tr style="background:#FFEB9C">
+                <td>126.00416</td>
+                <td>HELIFER</td>
+                <td>BRASIL BIO FUELS REFLORESTAMEN</td>
+                <td>PA</td>
+                <td style="text-align:center">03/02/2026</td>
+                <td style="text-align:right">R$ 26.369</td>
+                <td style="text-align:center"><b>EM ABERTO</b></td>
+            </tr><tr style="background:#FFEB9C">
+                <td>126.00400</td>
+                <td>HELIBOMBAS</td>
+                <td>ACCESS COMERCIO DE BOMBAS E SE</td>
+                <td>SP</td>
+                <td style="text-align:center">03/02/2026</td>
+                <td style="text-align:right">R$ 10.970</td>
+                <td style="text-align:center"><b>EM ABERTO</b></td>
+            </tr><tr style="background:#FFEB9C">
+                <td>126.00412</td>
+                <td>SEBASTIÃO</td>
+                <td>JBS S/A</td>
+                <td>MT</td>
+                <td style="text-align:center">03/02/2026</td>
+                <td style="text-align:right">R$ 4.262</td>
+                <td style="text-align:center"><b>EM ABERTO</b></td>
+            </tr><tr style="background:#FFEB9C">
+                <td>126.00404</td>
+                <td>ALEXANDRE DURAZZO</td>
+                <td>VENANCIO FURLANETTO AGROPECUAR</td>
+                <td>MG</td>
+                <td style="text-align:center">03/02/2026</td>
+                <td style="text-align:right">R$ 1.471</td>
+                <td style="text-align:center"><b>EM ABERTO</b></td>
+            </tr><tr style="background:#FFEB9C">
+                <td>126.00414</td>
+                <td>HELIBOMBAS</td>
+                <td>TICOFRUT S.A</td>
+                <td>EX</td>
+                <td style="text-align:center">03/02/2026</td>
+                <td style="text-align:right">R$ 1.156</td>
+                <td style="text-align:center"><b>EM ABERTO</b></td>
+            </tr><tr style="background:#FFEB9C">
+                <td>226.0033</td>
+                <td>MARCELO BENTO</td>
+                <td>HIDROHARD TECNOLOGIA EM TRANSF</td>
+                <td>RS</td>
+                <td style="text-align:center">04/02/2026</td>
+                <td style="text-align:right">R$ 41.903</td>
+                <td style="text-align:center"><b>EM ABERTO</b></td>
+            </tr><tr style="background:#FFEB9C">
+                <td>126.00432</td>
+                <td>SEBASTIÃO</td>
+                <td>AHL PULP INDUSTRIA DE ALIMENTO</td>
+                <td>GO</td>
+                <td style="text-align:center">05/02/2026</td>
+                <td style="text-align:right">R$ 5.496</td>
+                <td style="text-align:center"><b>EM ABERTO</b></td>
+            </tr><tr style="background:#FFEB9C">
+                <td>126.00440</td>
+                <td>RAFAEL LUCATELI</td>
+                <td>FRIGORIFICO RIO DA PRATA LTDA</td>
+                <td>PR</td>
+                <td style="text-align:center">05/02/2026</td>
+                <td style="text-align:right">R$ 1.964</td>
+                <td style="text-align:center"><b>EM ABERTO</b></td>
+            </tr><tr style="background:#FFEB9C">
+                <td>126.00448</td>
+                <td>HELIBOMBAS</td>
+                <td>WORTEC INDUSTRIA E COMERCIO DE</td>
+                <td>SP</td>
+                <td style="text-align:center">06/02/2026</td>
+                <td style="text-align:right">R$ 1.207</td>
+                <td style="text-align:center"><b>EM ABERTO</b></td>
+            </tr></tbody></table>
+            <p style='font-size:0.72rem;color:#666;padding:6px 10px'>
+              Exibe cotações em aberto (prioridade) e, na ausência, as mais recentes do mês fechado.
+            </p>
+    </div>
+</div>
+
+<!-- Linha: Funil e Conversão por território -->
+<div class="grid-2">
+    <div class="card"><div>                            <div id="cot_funil" class="plotly-graph-div" style="height:320px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("cot_funil")) {                    Plotly.newPlot(                        "cot_funil",                        [{"marker":{"color":["#2E75B6","#FFC000","#70AD47","#C00000"]},"textinfo":"value+percent initial","x":[315,101,195,19],"y":["Criadas","Em aberto","Encerradas (pedido)","Perdidas"],"type":"funnel"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"margin":{"t":50,"b":20,"l":40,"r":20},"title":{"text":"Funil de Cota\u00e7\u00f5es \u2014 02\u002f2026"},"plot_bgcolor":"white","paper_bgcolor":"white","height":320},                        {"displayModeBar": false, "responsive": true}                    )                };            </script>        </div></div>
+    <div class="card">
+        <div class="section-title">🎯 Conversão por UF (Estado do Cliente)</div>
+        <table class="tabela">
+            <thead><tr>
+                                <th>UF</th><th>Cotações</th><th>Encerradas</th><th>Abertas</th><th>Perdidas</th><th>Valor Orçado</th><th>Tx Conv. Geral</th><th>Finalizadas</th><th>Tx Conv. Final</th>
+            </tr></thead><tbody><tr style="background:#E2F0D9">
+                <td>SP</td>
+                <td style="text-align:center">123</td>
+                <td style="text-align:center">67</td>
+                <td style="text-align:center">39</td>
+                <td style="text-align:center">17</td>
+                <td style="text-align:right">R$ 986.010</td>
+                <td style="text-align:center"><b>54.5%</b></td>
+                <td style="text-align:center">84</td>
+                <td style="text-align:center"><b>79.8%</b></td>
+            </tr><tr style="background:#E2F0D9">
+                <td>PA</td>
+                <td style="text-align:center">15</td>
+                <td style="text-align:center">7</td>
+                <td style="text-align:center">8</td>
+                <td style="text-align:center">0</td>
+                <td style="text-align:right">R$ 857.261</td>
+                <td style="text-align:center"><b>46.7%</b></td>
+                <td style="text-align:center">7</td>
+                <td style="text-align:center"><b>100.0%</b></td>
+            </tr><tr style="background:#E2F0D9">
+                <td>PR</td>
+                <td style="text-align:center">53</td>
+                <td style="text-align:center">36</td>
+                <td style="text-align:center">16</td>
+                <td style="text-align:center">1</td>
+                <td style="text-align:right">R$ 275.475</td>
+                <td style="text-align:center"><b>67.9%</b></td>
+                <td style="text-align:center">37</td>
+                <td style="text-align:center"><b>97.3%</b></td>
+            </tr><tr style="background:#E2F0D9">
+                <td>RS</td>
+                <td style="text-align:center">16</td>
+                <td style="text-align:center">8</td>
+                <td style="text-align:center">8</td>
+                <td style="text-align:center">0</td>
+                <td style="text-align:right">R$ 138.248</td>
+                <td style="text-align:center"><b>50.0%</b></td>
+                <td style="text-align:center">8</td>
+                <td style="text-align:center"><b>100.0%</b></td>
+            </tr><tr style="background:#E2F0D9">
+                <td>GO</td>
+                <td style="text-align:center">20</td>
+                <td style="text-align:center">16</td>
+                <td style="text-align:center">4</td>
+                <td style="text-align:center">0</td>
+                <td style="text-align:right">R$ 136.169</td>
+                <td style="text-align:center"><b>80.0%</b></td>
+                <td style="text-align:center">16</td>
+                <td style="text-align:center"><b>100.0%</b></td>
+            </tr><tr style="background:#E2F0D9">
+                <td>MG</td>
+                <td style="text-align:center">23</td>
+                <td style="text-align:center">18</td>
+                <td style="text-align:center">5</td>
+                <td style="text-align:center">0</td>
+                <td style="text-align:right">R$ 92.603</td>
+                <td style="text-align:center"><b>78.3%</b></td>
+                <td style="text-align:center">18</td>
+                <td style="text-align:center"><b>100.0%</b></td>
+            </tr><tr style="background:#E2F0D9">
+                <td>MT</td>
+                <td style="text-align:center">15</td>
+                <td style="text-align:center">10</td>
+                <td style="text-align:center">5</td>
+                <td style="text-align:center">0</td>
+                <td style="text-align:right">R$ 74.453</td>
+                <td style="text-align:center"><b>66.7%</b></td>
+                <td style="text-align:center">10</td>
+                <td style="text-align:center"><b>100.0%</b></td>
+            </tr><tr style="background:#E2F0D9">
+                <td>RJ</td>
+                <td style="text-align:center">7</td>
+                <td style="text-align:center">5</td>
+                <td style="text-align:center">2</td>
+                <td style="text-align:center">0</td>
+                <td style="text-align:right">R$ 70.966</td>
+                <td style="text-align:center"><b>71.4%</b></td>
+                <td style="text-align:center">5</td>
+                <td style="text-align:center"><b>100.0%</b></td>
+            </tr><tr style="background:#E2F0D9">
+                <td>MS</td>
+                <td style="text-align:center">10</td>
+                <td style="text-align:center">9</td>
+                <td style="text-align:center">1</td>
+                <td style="text-align:center">0</td>
+                <td style="text-align:right">R$ 39.676</td>
+                <td style="text-align:center"><b>90.0%</b></td>
+                <td style="text-align:center">9</td>
+                <td style="text-align:center"><b>100.0%</b></td>
+            </tr><tr style="background:#FCE4D6">
+                <td>SE</td>
+                <td style="text-align:center">2</td>
+                <td style="text-align:center">0</td>
+                <td style="text-align:center">2</td>
+                <td style="text-align:center">0</td>
+                <td style="text-align:right">R$ 20.582</td>
+                <td style="text-align:center"><b>0.0%</b></td>
+                <td style="text-align:center">0</td>
+                <td style="text-align:center"><b>0.0%</b></td>
+            </tr><tr style="background:#E2F0D9">
+                <td>SC</td>
+                <td style="text-align:center">7</td>
+                <td style="text-align:center">5</td>
+                <td style="text-align:center">2</td>
+                <td style="text-align:center">0</td>
+                <td style="text-align:right">R$ 18.366</td>
+                <td style="text-align:center"><b>71.4%</b></td>
+                <td style="text-align:center">5</td>
+                <td style="text-align:center"><b>100.0%</b></td>
+            </tr><tr style="background:#E2F0D9">
+                <td>PE</td>
+                <td style="text-align:center">4</td>
+                <td style="text-align:center">3</td>
+                <td style="text-align:center">1</td>
+                <td style="text-align:center">0</td>
+                <td style="text-align:right">R$ 16.990</td>
+                <td style="text-align:center"><b>75.0%</b></td>
+                <td style="text-align:center">3</td>
+                <td style="text-align:center"><b>100.0%</b></td>
+            </tr></tbody></table>
+            <p style='font-size:0.72rem;color:#666;padding:6px 10px'>
+                            Conversão por UF (estado do cliente). Conversão geral = encerradas/criadas. Conversão final = encerradas/(encerradas+perdidas).
+            </p>
+    </div>
+</div>
+
+<!-- Linha 1: Evolução + Semáforo -->
+<div class="grid-2" id="sec-estrategico">
+  <div class="card"><div>                            <div id="ev" class="plotly-graph-div" style="height:420px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("ev")) {                    Plotly.newPlot(                        "ev",                        [{"hovertemplate":"Meta 2025: R$ 2.200.000\u003cextra\u003e\u003c\u002fextra\u003e","line":{"color":"#A6A6A6","dash":"dot","width":1.5},"mode":"lines","name":"Meta 2025","x":["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],"y":[2200000,2200000,2200000,2200000,2200000,2200000,2200000,2200000,2200000,2200000,2200000,2200000],"type":"scatter"},{"hovertemplate":"Meta 2026: R$ 2.500.000\u003cextra\u003e\u003c\u002fextra\u003e","line":{"color":"#ED7D31","dash":"dash","width":2},"mode":"lines","name":"Meta 2026","x":["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],"y":[2500000,2500000,2500000,2500000,2500000,2500000,2500000,2500000,2500000,2500000,2500000,2500000],"type":"scatter"},{"marker":{"color":"#A6A6A6"},"name":"2025","opacity":0.7,"text":["R$ 1.800.329","R$ 1.633.314","R$ 1.524.747","R$ 1.895.399","R$ 2.101.163","R$ 1.573.476","R$ 1.898.389","R$ 2.080.922","R$ 1.743.503","R$ 2.681.272","R$ 2.355.344","R$ 1.377.533"],"textfont":{"size":10},"textposition":"outside","x":["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],"y":{"dtype":"f8","bdata":"w\u002fUoHIl4O0H2KFzPIew4Qa5H4ToLRDdB9ihcD+frPEHNzMxM1QdAQQrXo3BkAjhBFK5HYZX3PEH2KFyPmcA\u002fQfYoXA+PmjpBhetR+Nt0REFcj8LVR\u002fhBQeF6FO78BDVB"},"type":"bar"},{"marker":{"color":"#2E75B6"},"name":"2026","text":["R$ 2.485.018","R$ 2.010.116","R$ 302.278"],"textfont":{"size":10},"textposition":"outside","x":["Jan","Fev","Mar"],"y":{"dtype":"f8","bdata":"pHA9yoz1QkG4HoVrBKw+QfYoXI8WcxJB"},"type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"legend":{"orientation":"h","yanchor":"bottom","y":1.01,"xanchor":"left","x":0},"margin":{"t":80,"b":30,"l":80,"r":20},"yaxis":{"title":{"text":"R$"},"tickformat":",.0f","range":[0,3163900.8891999996]},"title":{"text":"Evolu\u00e7\u00e3o de Vendas Mensal \u2014 Pe\u00e7as (2025 vs 2026)"},"barmode":"group","xaxis":{"title":{"text":""}},"plot_bgcolor":"white","paper_bgcolor":"white","height":420},                        {"displayModeBar": false, "responsive": true}                    )                };            </script>        </div></div>
+  <div class="card"><div>                            <div id="sem" class="plotly-graph-div" style="height:320px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("sem")) {                    Plotly.newPlot(                        "sem",                        [{"hole":0.55,"labels":["Atrasado","Urgente","No prazo"],"marker":{"colors":["#C00000","#FFC000","#70AD47"]},"pull":[0.05,0,0],"textfont":{"size":12},"textinfo":"label+value","values":[67,58,117],"type":"pie"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"margin":{"t":50,"b":10,"l":10,"r":10},"title":{"text":"Carteira em Aberto"},"annotations":[{"showarrow":false,"text":"\u003cb\u003eR$ 1.362.499\u003c\u002fb\u003e","x":0.5,"y":0.5,"font":{"size":13}}],"plot_bgcolor":"white","paper_bgcolor":"white","height":320,"showlegend":false},                        {"displayModeBar": false, "responsive": true}                    )                };            </script>        </div></div>
+</div>
+
+<!-- Linha 2: Ranking Externos -->
+<div class="grid-wide">
+    <div class="card"><div>                            <div id="ext" class="plotly-graph-div" style="height:496px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("ext")) {                    Plotly.newPlot(                        "ext",                        [{"marker":{"color":"#A6A6A6"},"name":"2025","opacity":0.65,"orientation":"h","x":{"dtype":"f8","bdata":"AAAAAAAAAAAAAAAAAAAAAClcj0LGKTJBKVyPghvQMkF7FK7H1zs4QUjhelSTXURBmpmZWShhNkH2KFzH1LBrQQ=="},"y":["FERNANDO GUIDELI","ALEXANDRE DURAZZO","ALEX MENDON\u00c7A","MARCELO BENTO","SEBASTI\u00c3O","RAFAEL LUCATELI","HELIFER","HELIBOMBAS"],"type":"bar"},{"marker":{"color":"#1F4E79"},"name":"2026","orientation":"h","text":["R$ 63.189","R$ 144.964","R$ 174.927","R$ 198.667","R$ 415.364","R$ 567.376","R$ 770.287","R$ 2.462.637"],"textfont":{"size":10},"textposition":"outside","x":{"dtype":"f8","bdata":"H4XrUZja7kCuR+F6HrIBQa5H4Xp6WgVB4XoUrldACEHXo3A9EVoZQXsUrkegUCFBCtejcN6BJ0EK16OQ1slCQQ=="},"y":["FERNANDO GUIDELI","ALEXANDRE DURAZZO","ALEX MENDON\u00c7A","MARCELO BENTO","SEBASTI\u00c3O","RAFAEL LUCATELI","HELIFER","HELIBOMBAS"],"type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"title":{"text":"R$"},"tickformat":",.0f"},"margin":{"t":50,"b":30,"l":170,"r":90},"legend":{"orientation":"h","y":1.08},"title":{"text":"Ranking Repr. Externos \u2014 2026 vs 2025"},"barmode":"overlay","yaxis":{"title":{"text":""}},"plot_bgcolor":"white","paper_bgcolor":"white","height":496},                        {"displayModeBar": false, "responsive": true}                    )                };            </script>        </div></div>
+</div>
+
+<!-- Linha 3: ABC Treemap + Performance Externos -->
+<div class="grid-2">
+  <div class="card"><div>                            <div id="abc" class="plotly-graph-div" style="height:380px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("abc")) {                    Plotly.newPlot(                        "abc",                        [{"branchvalues":"total","customdata":[["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"],["A"]],"domain":{"x":[0.0,1.0],"y":[0.0,1.0]},"hovertemplate":"labels=%{label}\u003cbr\u003eFaturamento=%{value}\u003cbr\u003eparent=%{parent}\u003cbr\u003eid=%{id}\u003cbr\u003eCurva=%{customdata[0]}\u003cextra\u003e\u003c\u002fextra\u003e","ids":["A\u002fAGROPALMA S\u002fA","A\u002fUSINA SANTA FE S\u002fA.","A\u002fUNIPREST INDUSTRIA E COMERCIO DE MAQUINAS LTDA","A\u002fINTRAFRUT INDUSTRIA TRANSFORMADORA DE FRUTOS S\u002fA","A\u002fLOUIS DREYFUS COMPANY BRASIL S.A.","A\u002fCMPC IGUACU EMBALAGENS LTDA","A\u002fUSINA SAO DOMINGOS-ACUCAR E ETANOL S\u002fA","A\u002fBBR AGRO SUPLEMENTOS LTDA EM RECUPERACAO JUDICIAL","A\u002fGELCO GELATINAS DO BRASIL LTDA","A\u002fBINATURAL ENERGIAS RENOVAVEIS S.A","A\u002fINDUSTRIA DE PELES MINUANO LTDA","A\u002fJ R F DE ANDRADE NETO INDUSTRIA E COMERCIO DE OLEOS LTDA","A\u002fCOPACOL-COOPERATIVA AGROINDUSTRIAL CONSOLATA","A\u002fRAIZEN CAARAPO ACUCAR E ALCOOL LTDA","A\u002fDRYLLER INDUSTRIA E COMERCIO DE HIDROXIDOS LTDA","A\u002fUSINA SAO JOSE DA ESTIVA SA ACUCAR E ALCOOL","A\u002fBELEM BIOENERGIA BRASIL S\u002fA","A\u002fHELIBOMBAS - IND. E COM. DE EQUIPAMENTOS HIDRAULICOS LTDA","A\u002fIMETAME ENERGIA S.A","A\u002fRRP ENERGIA LTDA","A\u002fHELIFER INDUSTRIA E COMERCIO DE EQUIPAMENTOS HIDRAULICOS LTDA","A\u002fCRI GEO BIOGAS S.A.","A\u002fHELIBOMBAS SERVICE - ASSISTENCIA TECNICA LTDA","A\u002fRAIZEN ENERGIA S.A","A\u002fJBS S\u002fA","A\u002fLOUIS DREYFUS COMPANY SUCOS S.A","A\u002fMARTINS BORGES AGROINDUSTRIA LTDA","A\u002fSUCOCITRICO CUTRALE LTDA","A\u002fCITROSUCO S\u002fA AGROINDUSTRIA","A\u002fBIOENERGETICA AROEIRA S.A.","A"],"labels":["AGROPALMA S\u002fA","USINA SANTA FE S\u002fA.","UNIPREST INDUSTRIA E COMERCIO DE MAQUINAS LTDA","INTRAFRUT INDUSTRIA TRANSFORMADORA DE FRUTOS S\u002fA","LOUIS DREYFUS COMPANY BRASIL S.A.","CMPC IGUACU EMBALAGENS LTDA","USINA SAO DOMINGOS-ACUCAR E ETANOL S\u002fA","BBR AGRO SUPLEMENTOS LTDA EM RECUPERACAO JUDICIAL","GELCO GELATINAS DO BRASIL LTDA","BINATURAL ENERGIAS RENOVAVEIS S.A","INDUSTRIA DE PELES MINUANO LTDA","J R F DE ANDRADE NETO INDUSTRIA E COMERCIO DE OLEOS LTDA","COPACOL-COOPERATIVA AGROINDUSTRIAL CONSOLATA","RAIZEN CAARAPO ACUCAR E ALCOOL LTDA","DRYLLER INDUSTRIA E COMERCIO DE HIDROXIDOS LTDA","USINA SAO JOSE DA ESTIVA SA ACUCAR E ALCOOL","BELEM BIOENERGIA BRASIL S\u002fA","HELIBOMBAS - IND. E COM. DE EQUIPAMENTOS HIDRAULICOS LTDA","IMETAME ENERGIA S.A","RRP ENERGIA LTDA","HELIFER INDUSTRIA E COMERCIO DE EQUIPAMENTOS HIDRAULICOS LTDA","CRI GEO BIOGAS S.A.","HELIBOMBAS SERVICE - ASSISTENCIA TECNICA LTDA","RAIZEN ENERGIA S.A","JBS S\u002fA","LOUIS DREYFUS COMPANY SUCOS S.A","MARTINS BORGES AGROINDUSTRIA LTDA","SUCOCITRICO CUTRALE LTDA","CITROSUCO S\u002fA AGROINDUSTRIA","BIOENERGETICA AROEIRA S.A.","A"],"marker":{"colors":["#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47","#70AD47"]},"name":"","parents":["A","A","A","A","A","A","A","A","A","A","A","A","A","A","A","A","A","A","A","A","A","A","A","A","A","A","A","A","A","A",""],"values":{"dtype":"f8","bdata":"XI\u002fC9RmAGEH2KFyPcpTdQK5H4XoUWN9AXI\u002fC9Zg+4EBSuB6F+yjhQAAAAACAh+FAcT0K10PX4UCamZmZybTiQD0K16OwFuRAH4XrUehF5UCamZmZ2cvlQIXrUbiWG+lASOF6FC6q6UCamZmZaU7rQHE9CteT\u002ftxA16NwPVo77EAUrkfhunbuQK5H4XroJvFAuB6F65Gr8UCamZmZTdrzQPYoXI8iz\u002fVAAAAAAGym+UCuR+F6JOz6QOxRuB4N4\u002f9APQrXo9RcAEEzMzMzr7wIQVK4HoXVYA5BzczMzBcbEUEpXI\u002fCGNISQVyPwvW4xuxAFK5HoXOxRkE="},"type":"treemap","textfont":{"size":11},"texttemplate":"%{label}\u003cbr\u003e%{value:,.0f}"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"legend":{"tracegroupgap":0},"title":{"text":"Curva ABC Clientes \u2014 2026 (Top 30)"},"margin":{"t":50,"b":10,"l":10,"r":10},"plot_bgcolor":"white","paper_bgcolor":"white","height":380},                        {"displayModeBar": false, "responsive": true}                    )                };            </script>        </div></div>
+  <div class="card"><div>                            <div id="perf" class="plotly-graph-div" style="height:380px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("perf")) {                    Plotly.newPlot(                        "perf",                        [{"marker":{"color":["#2E75B6","#2E75B6","#2E75B6","#2E75B6","#2E75B6","#2E75B6","#2E75B6","#2E75B6"]},"name":"Vendas de Pe\u00e7as","text":["R$ 2.462.637","R$ 770.287","R$ 567.376","R$ 415.364","R$ 198.667","R$ 174.927","R$ 144.964","R$ 63.189"],"textfont":{"size":10},"textposition":"outside","x":["HELIBOMBAS","HELIFER","RAFAEL LUCATELI","SEBASTI\u00c3O","MARCELO BENTO","ALEX MENDON\u00c7A","ALEXANDRE DURAZZO","FERNANDO GUIDELI"],"y":[2462637.13,770287.22,567376.14,415364.31,198666.96,174927.31,144963.81,63188.76],"type":"bar","xaxis":"x","yaxis":"y"},{"line":{"color":"#ED7D31","width":2},"marker":{"color":"#ED7D31","size":8},"mode":"lines+markers+text","name":"Margem %","text":["54%","49%","50%","52%","51%","54%","52%","52%"],"textfont":{"color":"#ED7D31","size":10},"textposition":"top center","x":["HELIBOMBAS","HELIFER","RAFAEL LUCATELI","SEBASTI\u00c3O","MARCELO BENTO","ALEX MENDON\u00c7A","ALEXANDRE DURAZZO","FERNANDO GUIDELI"],"y":[53.877607361963186,48.80434782608695,50.31818181818182,51.72459016393442,51.16808510638298,53.97222222222222,52.27297297297297,52.44615384615384],"type":"scatter","xaxis":"x","yaxis":"y2"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,0.94],"tickangle":-20},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"R$"},"tickformat":",.0f","range":[0,2955164.556]},"yaxis2":{"anchor":"x","overlaying":"y","side":"right","title":{"text":"Margem %"},"range":[0,100],"ticksuffix":"%"},"margin":{"t":60,"b":40,"l":80,"r":80},"legend":{"orientation":"h","y":1.1},"title":{"text":"Performance Externos 2026 \u2014 Vendas de Pe\u00e7as e Margem M\u00e9dia"},"plot_bgcolor":"white","paper_bgcolor":"white","height":380},                        {"displayModeBar": false, "responsive": true}                    )                };            </script>        </div></div>
+</div>
+
+<!-- Tabela: YoY por vendedor -->
+<div class="grid-wide">
+    <div class="card">
+        <div class="section-title">📈 Crescimento YoY por Vendedor — Fevereiro/2026 vs Fevereiro/2025</div>
+        <table class="tabela">
+            <thead><tr>
+                <th>Vendedor</th><th>Tipo</th><th>Fevereiro/2025</th>
+                <th>Fevereiro/2026</th><th>Variação R$</th><th>Variação %</th>
+            </tr></thead><tbody><tr style="background:#C6EFCE">
+                <td>HELIFER</td>
+                <td>Externo</td>
+                <td style="text-align:right">R$ 200.162</td>
+                <td style="text-align:right">R$ 651.365</td>
+                <td style="text-align:right">R$ 451.204</td>
+                <td style="text-align:center"><b>+225.4%</b></td>
+            </tr><tr style="background:#FFC7CE">
+                <td>HELIBOMBAS</td>
+                <td>Externo</td>
+                <td style="text-align:right">R$ 909.264</td>
+                <td style="text-align:right">R$ 633.382</td>
+                <td style="text-align:right">R$ -275.882</td>
+                <td style="text-align:center"><b>-30.3%</b></td>
+            </tr><tr style="background:#C6EFCE">
+                <td>RAFAEL LUCATELI</td>
+                <td>Externo</td>
+                <td style="text-align:right">R$ 135.767</td>
+                <td style="text-align:right">R$ 332.597</td>
+                <td style="text-align:right">R$ 196.830</td>
+                <td style="text-align:center"><b>+145.0%</b></td>
+            </tr><tr style="background:#C6EFCE">
+                <td>SEBASTIÃO</td>
+                <td>Externo</td>
+                <td style="text-align:right">R$ 156.307</td>
+                <td style="text-align:right">R$ 165.670</td>
+                <td style="text-align:right">R$ 9.363</td>
+                <td style="text-align:center"><b>+6.0%</b></td>
+            </tr><tr style="background:#FFC7CE">
+                <td>MARCELO BENTO</td>
+                <td>Externo</td>
+                <td style="text-align:right">R$ 144.958</td>
+                <td style="text-align:right">R$ 89.937</td>
+                <td style="text-align:right">R$ -55.021</td>
+                <td style="text-align:center"><b>-38.0%</b></td>
+            </tr><tr style="background:#C6EFCE">
+                <td>ALEXANDRE DURAZZO</td>
+                <td>Externo</td>
+                <td style="text-align:right">R$ 0</td>
+                <td style="text-align:right">R$ 63.488</td>
+                <td style="text-align:right">R$ 63.488</td>
+                <td style="text-align:center"><b>—</b></td>
+            </tr><tr style="background:#FFC7CE">
+                <td>ALEX MENDONÇA</td>
+                <td>Externo</td>
+                <td style="text-align:right">R$ 86.857</td>
+                <td style="text-align:right">R$ 43.742</td>
+                <td style="text-align:right">R$ -43.115</td>
+                <td style="text-align:center"><b>-49.6%</b></td>
+            </tr><tr style="background:#C6EFCE">
+                <td>FERNANDO GUIDELI</td>
+                <td>Externo</td>
+                <td style="text-align:right">R$ 0</td>
+                <td style="text-align:right">R$ 29.936</td>
+                <td style="text-align:right">R$ 29.936</td>
+                <td style="text-align:center"><b>—</b></td>
+            </tr></tbody></table>
+            <p style='font-size:0.72rem;color:#666;padding:6px 10px'>
+              Ranking por vendas do mês atual. Verde = crescimento YoY, vermelho = queda YoY.
+            </p>
+    </div>
+</div>
+
+<!-- Tabela: Aguardando NF -->
+<div class="grid-wide">
+  <div class="card">
+    <div class="section-title">📄 Top 10 Itens Aguardando Emissão de NF (mais antigos primeiro)</div>
+    <table class="tabela">
+            <thead><tr>
+                <th>Pedido</th><th>Cliente</th><th>Vendedor</th>
+                <th>Material</th><th>Descrição</th><th>Valor</th><th>Dias</th>
+            </tr></thead><tbody><tr style="background:#EDEDED">
+                <td>37706</td>
+                <td>MINERVA S.A.</td>
+                <td>CAIO</td>
+                <td>3819005005</td>
+                <td>CARCACA DE SAIDA (AISI 304) </td>
+                <td style="text-align:right">R$ 1.412</td>
+                <td style="text-align:center"><b>-</b><br><span style='font-size:0.7em;color:#666'>sem data de lib.</span></td>
+            </tr><tr style="background:#EDEDED">
+                <td>37831</td>
+                <td>ASSISTECWAFFER IND E COM DE MA</td>
+                <td>PRISCILA</td>
+                <td>3813007006</td>
+                <td>ESTATOR 1HT32 NBRA 1HT32 NBR</td>
+                <td style="text-align:right">R$ 514</td>
+                <td style="text-align:center"><b>-</b><br><span style='font-size:0.7em;color:#666'>sem data de lib.</span></td>
+            </tr><tr style="background:#EDEDED">
+                <td>37423</td>
+                <td>LOUIS DREYFUS COMPANY SUCOS S.</td>
+                <td>PRISCILA</td>
+                <td>3857000031</td>
+                <td>ROTOR 1HT76 STD AISI 304 CRO</td>
+                <td style="text-align:right">R$ 10.048</td>
+                <td style="text-align:center"><b>-</b><br><span style='font-size:0.7em;color:#666'>sem data de lib.</span></td>
+            </tr><tr style="background:#EDEDED">
+                <td>37423</td>
+                <td>LOUIS DREYFUS COMPANY SUCOS S.</td>
+                <td>PRISCILA</td>
+                <td>3318000004</td>
+                <td>EIXO DE ARTICULACAO COM ROSC</td>
+                <td style="text-align:right">R$ 4.018</td>
+                <td style="text-align:center"><b>-</b><br><span style='font-size:0.7em;color:#666'>sem data de lib.</span></td>
+            </tr><tr style="background:#EDEDED">
+                <td>37423</td>
+                <td>LOUIS DREYFUS COMPANY SUCOS S.</td>
+                <td>PRISCILA</td>
+                <td>3318000001</td>
+                <td>EIXO MOTRIZ AISI 304 HTS76</td>
+                <td style="text-align:right">R$ 2.275</td>
+                <td style="text-align:center"><b>-</b><br><span style='font-size:0.7em;color:#666'>sem data de lib.</span></td>
+            </tr><tr style="background:#EDEDED">
+                <td>37423</td>
+                <td>LOUIS DREYFUS COMPANY SUCOS S.</td>
+                <td>PRISCILA</td>
+                <td>1824000045</td>
+                <td>SELO MECANICO M377G-S5/70L Q</td>
+                <td style="text-align:right">R$ 1.784</td>
+                <td style="text-align:center"><b>-</b><br><span style='font-size:0.7em;color:#666'>sem data de lib.</span></td>
+            </tr><tr style="background:#EDEDED">
+                <td>37423</td>
+                <td>LOUIS DREYFUS COMPANY SUCOS S.</td>
+                <td>PRISCILA</td>
+                <td>3318000004</td>
+                <td>EIXO DE ARTICULACAO COM ROSC</td>
+                <td style="text-align:right">R$ 4.018</td>
+                <td style="text-align:center"><b>-</b><br><span style='font-size:0.7em;color:#666'>sem data de lib.</span></td>
+            </tr><tr style="background:#EDEDED">
+                <td>37423</td>
+                <td>LOUIS DREYFUS COMPANY SUCOS S.</td>
+                <td>PRISCILA</td>
+                <td>1824000045</td>
+                <td>SELO MECANICO M377G-S5/70L Q</td>
+                <td style="text-align:right">R$ 1.784</td>
+                <td style="text-align:center"><b>-</b><br><span style='font-size:0.7em;color:#666'>sem data de lib.</span></td>
+            </tr><tr style="background:#EDEDED">
+                <td>37423</td>
+                <td>LOUIS DREYFUS COMPANY SUCOS S.</td>
+                <td>PRISCILA</td>
+                <td>3318000004</td>
+                <td>EIXO DE ARTICULACAO COM ROSC</td>
+                <td style="text-align:right">R$ 4.018</td>
+                <td style="text-align:center"><b>-</b><br><span style='font-size:0.7em;color:#666'>sem data de lib.</span></td>
+            </tr><tr style="background:#EDEDED">
+                <td>37423</td>
+                <td>LOUIS DREYFUS COMPANY SUCOS S.</td>
+                <td>PRISCILA</td>
+                <td>1824000045</td>
+                <td>SELO MECANICO M377G-S5/70L Q</td>
+                <td style="text-align:right">R$ 1.784</td>
+                <td style="text-align:center"><b>-</b><br><span style='font-size:0.7em;color:#666'>sem data de lib.</span></td>
+            </tr></tbody></table>
+            <p style='font-size:0.72rem;color:#999;padding:6px 10px'>
+                            📌 Dias calculados exclusivamente a partir da data de liberação para faturamento (DTALTERAFAT).
+                            Itens sem essa data ficam sinalizados como "sem data de lib.".
+            </p>
+  </div>
+</div>
+
+<!-- Tabela: Alertas de Margem -->
+<div class="grid-wide">
+  <div class="card">
+    <div class="section-title">⚠️ Alertas de Margem Crítica — Fevereiro/2026 (abaixo de 20%)</div>
+    <table class="tabela">
+            <thead><tr>
+                <th>Cliente</th><th>Vendedor</th><th>Material</th>
+                <th>Descrição</th><th>Vlr Venda</th><th>Vlr Custo</th><th>Margem</th>
+            </tr></thead><tbody><tr style="background:#FFC7CE">
+                <td>MINERACAO SAO JUDAS LTDA</td>
+                <td>PRISCILA</td>
+                <td>3965000001</td>
+                <td>ESTATOR 1HT45 NBRA 1HT45 NBR</td>
+                <td style="text-align:right">R$ 489</td>
+                <td style="text-align:right">R$ 504</td>
+                <td style="text-align:center"><b>-3.1%</b></td>
+            </tr><tr style="background:#FFC7CE">
+                <td>MINERACAO SAO JUDAS LTDA</td>
+                <td>PRISCILA</td>
+                <td>3965000011</td>
+                <td>ROTOR 1HT45 STD AISI 420    </td>
+                <td style="text-align:right">R$ 806</td>
+                <td style="text-align:right">R$ 831</td>
+                <td style="text-align:center"><b>-3.1%</b></td>
+            </tr><tr style="background:#FFC7CE">
+                <td>HELIBOMBAS - IND. E COM. DE </td>
+                <td>HELIBOMBAS</td>
+                <td>3193000016</td>
+                <td>COIFA NBRM 55  4HF-70L</td>
+                <td style="text-align:right">R$ 126</td>
+                <td style="text-align:right">R$ 128</td>
+                <td style="text-align:center"><b>-1.5%</b></td>
+            </tr><tr style="background:#FFB347">
+                <td>JALLES MACHADO S.A.</td>
+                <td>PRISCILA</td>
+                <td>3363000123</td>
+                <td>ESTATOR 1WM90L NBRHP 1WM90L </td>
+                <td style="text-align:right">R$ 3.300</td>
+                <td style="text-align:right">R$ 2.897</td>
+                <td style="text-align:center"><b>12.2%</b></td>
+            </tr><tr style="background:#FFB347">
+                <td>SANTA IZABEL ALIMENTOS LTDA</td>
+                <td>PRISCILA</td>
+                <td>3801013003</td>
+                <td>PINO DA ARTICULACAO WHT 40/F</td>
+                <td style="text-align:right">R$ 34</td>
+                <td style="text-align:right">R$ 30</td>
+                <td style="text-align:center"><b>12.6%</b></td>
+            </tr><tr style="background:#FFB347">
+                <td>CEMAVELTEC MANUTENCAO INDUST</td>
+                <td>CAIO</td>
+                <td>3806023000</td>
+                <td>LUVA DO ACOPLAMENTO AISI 316</td>
+                <td style="text-align:right">R$ 328</td>
+                <td style="text-align:right">R$ 268</td>
+                <td style="text-align:center"><b>18.2%</b></td>
+            </tr><tr style="background:#FFB347">
+                <td>MDG-INDUSTRIA E COMERCIO LTD</td>
+                <td>CAIO</td>
+                <td>3903010000</td>
+                <td>ROTOR HD20 OVER AISI 304   O</td>
+                <td style="text-align:right">R$ 720</td>
+                <td style="text-align:right">R$ 588</td>
+                <td style="text-align:center"><b>18.3%</b></td>
+            </tr></tbody></table>
+            <p style='font-size:0.72rem;color:#666;padding:6px 10px'>
+              📐 <b>Como é calculada a margem:</b>
+              Margem % = (Preço de Venda − VLRCUSTO) ÷ Preço de Venda × 100.
+              Representa o percentual de lucro bruto estimado sobre o item vendido.
+              Exibidos apenas itens com custo cadastrado (VLRCUSTO &gt; 0).
+              Valores negativos = vendido abaixo do custo. Lista sempre mostra todos abaixo de 20%.
+            </p>
+  </div>
+</div>
+
+<div class="footer">
+  Gerado automaticamente por fase4_dashboard.py · 05/03/2026 08:00 ·
+  Para atualizar: <code>python fase4_dashboard.py</code>
+</div>
+
+</div>
+
+<div id="aba-mtd" class="tab-pane">
+    <div class="kpi-row">
+        <div class="kpi-card">
+            <div class="kpi-label">Hoje (05/03)</div>
+            <div class="kpi-valor">R$ 4.853</div>
+            <div class="kpi-sub">1 pedidos no dia</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">MTD (03/2026)</div>
+            <div class="kpi-valor">R$ 302.278</div>
+            <div class="kpi-sub">53 pedidos · 108 itens</div>
+        </div>
+        <div class="kpi-card amarelo">
+            <div class="kpi-label">Run-rate diário</div>
+            <div class="kpi-valor">R$ 60.456</div>
+            <div class="kpi-sub">média por dia até hoje (5/31)</div>
+        </div>
+        <div class="kpi-card vermelho">
+            <div class="kpi-label">Projeção de Fechamento</div>
+            <div class="kpi-valor">R$ 1.874.121</div>
+            <div class="kpi-sub">Meta: R$ 2.500.000 · Atingimento proj.: 75.0%</div>
+            <div class="kpi-sub">Gap projetado: +R$ 625.879</div>
+        </div>
+    </div>
+
+    <div class="grid-wide">
+        <div class="card">
+            <div class="section-title">⚡ Leitura MTD em tempo real</div>
+            <p style='font-size:0.78rem;color:#666;padding:6px 10px'>
+              Esta aba mostra o mês em andamento até o momento da atualização do arquivo.
+              Para operação diária, atualizar em ciclos curtos (ex.: a cada 1 hora) mantém a visão próxima do real.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+function abrirAba(tabId) {
+    document.querySelectorAll('.tab-pane').forEach(function(el) { el.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(el) { el.classList.remove('active'); });
+    const alvo = document.getElementById(tabId);
+    if (alvo) alvo.classList.add('active');
+    const botao = document.querySelector('.tab-btn[data-tab="' + tabId + '"]');
+    if (botao) botao.classList.add('active');
+}
+</script>
+
+</body>
+</html>
