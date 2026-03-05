@@ -56,6 +56,44 @@ WITH VendedoresPedido AS (
     JOIN FN_VENDEDORES fv ON fv.CODIGO = pv.VENDEDOR
     GROUP BY pv.PEDIDO
 ),
+PedidosNFS AS (
+    SELECT DISTINCT
+        n.CODIGO AS NFS,
+        n.VEPEDIDO AS PEDIDO
+    FROM FN_NFS n
+    WHERE n.VEPEDIDO IS NOT NULL
+
+    UNION
+
+    SELECT DISTINCT
+        x.NFS,
+        x.VEPEDIDO AS PEDIDO
+    FROM FN_NFSADTPEDIDO x
+    WHERE x.NFS IS NOT NULL
+      AND x.VEPEDIDO IS NOT NULL
+
+        UNION
+
+        SELECT DISTINCT
+                i.NFS,
+                pi.PEDIDO
+        FROM FN_NFSITENS i
+        JOIN VE_PEDIDOITENS pi ON pi.CODIGO = i.PEDIDOITEM
+        WHERE i.NFS IS NOT NULL
+            AND i.PEDIDOITEM IS NOT NULL
+            AND pi.PEDIDO IS NOT NULL
+),
+VendedoresNFS AS (
+    SELECT
+        pn.NFS,
+        MAX(vp.Vend_Ext_Principal) AS Vend_Ext_Principal,
+        MAX(vp.Vend_Ext) AS Vend_Ext,
+        MAX(vp.Vend_Int_Principal) AS Vend_Int_Principal,
+        MAX(vp.Vend_Int) AS Vend_Int
+    FROM PedidosNFS pn
+    JOIN VendedoresPedido vp ON vp.PEDIDO = pn.PEDIDO
+    GROUP BY pn.NFS
+),
 StatusNF AS (
     SELECT
         rr.NFS,
@@ -99,6 +137,7 @@ SELECT
     r.NFS,
     r.NOTASEQ,
     r.NRODOCUMENTO AS Nro_Documento,
+    n.TPDOCUMENTO AS Tp_Documento,
     n.DTEMISSAO AS Dt_Emissao_NF,
     r.DTEMISSAO AS Dt_Emissao_Titulo,
     r.DTVENCIMENTO AS Dt_Venc,
@@ -114,7 +153,7 @@ SELECT
     ISNULL(r.VLRDEVIDO, 0) AS Vlr_Devido,
     ISNULL(r.VLREFETIVO, 0) AS Vlr_Recebido,
     ISNULL(r.VLRDESCONTO, 0) AS Vlr_Desc,
-    CASE WHEN r.DTPAGAMENTO IS NULL THEN 'N' ELSE 'S' END AS P,
+    ISNULL(n.VLRTOTAL, 0) AS Vlr_Total_NF,
 
     n.NRONOTA,
     n.VEPEDIDO,
@@ -129,15 +168,14 @@ SELECT
     ISNULL(tn.Tipo_Produto_NF, 'PECA') AS Tipo_Produto,
     ISNULL(tn.Qtd_Itens_Peca, 0) AS Qtd_Itens_Peca,
     ISNULL(tn.Qtd_Itens_Bomba, 0) AS Qtd_Itens_Bomba,
-    COALESCE(vp.Vend_Ext_Principal, vp.Vend_Ext,
-             CASE WHEN vn.TIPO = 'E' THEN vn.RAZAO END) AS Vendedor_Externo,
-    COALESCE(vp.Vend_Int_Principal, vp.Vend_Int,
+    COALESCE(vnfs.Vend_Ext_Principal, vnfs.Vend_Ext) AS Vendedor_Externo,
+    COALESCE(vnfs.Vend_Int_Principal, vnfs.Vend_Int,
              CASE WHEN vn.TIPO = 'I' THEN vn.RAZAO END) AS Vendedor_Interno
 FROM FN_RECEBER r
 JOIN FN_NFS n ON n.CODIGO = r.NFS
 LEFT JOIN FN_FORNECEDORES c ON c.CODIGO = n.CLIENTE
 LEFT JOIN FN_VENDEDORES vn ON vn.CODIGO = n.VENDEDOR
-LEFT JOIN VendedoresPedido vp ON vp.PEDIDO = n.VEPEDIDO
+LEFT JOIN VendedoresNFS vnfs ON vnfs.NFS = r.NFS
 LEFT JOIN StatusNF snf ON snf.NFS = r.NFS
 LEFT JOIN TipoNFS tn ON tn.NFS = r.NFS
 WHERE r.NFS IS NOT NULL
@@ -345,15 +383,16 @@ def gerar_excel(df: pd.DataFrame, validacao: pd.DataFrame, dt_ini: str, dt_fim: 
         "Fl",
         "Cliente",
         "Nro_Documento",
+        "Tp_Documento",
         "Dt_Emissao_NF",
         "Dt_Emissao_Titulo",
         "Dt_Venc",
         "Dt_Ultimo_Venc_NF",
         "Vlr_Devido",
+        "Vlr_Total_NF",
         "Dt_Pagto",
         "Vlr_Recebido",
         "Vlr_Desc",
-        "P",
         "Status_Pagamento",
         "Status_NF_Quitada",
         "Parcelas_Total",
@@ -398,7 +437,7 @@ def gerar_excel(df: pd.DataFrame, validacao: pd.DataFrame, dt_ini: str, dt_fim: 
             writer,
             "506_Melhorado",
             cols_data=["Dt_Emissao", "Dt_Emissao_Titulo", "Dt_Venc", "Dt_Ultimo_Venc_NF", "Dt_Pagto"],
-            cols_valor=["Vlr_Devido", "Vlr_Recebido", "Vlr_Desc"],
+            cols_valor=["Vlr_Devido", "Vlr_Total_NF", "Vlr_Recebido", "Vlr_Desc"],
         )
         formatar_sheet(
             writer,
